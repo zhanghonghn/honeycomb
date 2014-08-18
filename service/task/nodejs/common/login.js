@@ -105,7 +105,6 @@ Request.prototype = {
                 if (error !== null) {
                     console.log('exec error: ' + error);
                 } else {
-                    console.log('%$#%#$%$#' + _this.encodeCookies(cookies));
                     callback && callback(_this.encodeCookies(cookies));
                 }
             });
@@ -115,10 +114,9 @@ Request.prototype = {
 
 var oTest = new Request();
 oTest.getCookies('http://www.newsmth.net/nForum/user/ajax_login.json', { "id": 'wjzh', "passwd": 'bull51526', "CookieDate": '3', 'mode': '2' }, function (cookies) {
-    oTest.getCookies('http://m.newsmth.net/', cookies, function (cookies) {//.replace(/\s+/g, "")
-        oTest.getPageData('http://m.newsmth.net/article/DecorationTrade', cookies, function (page_data) {
-            oFile.writeFile('./test.html', page_data);
-        });
-    }, true);
+   
+    oTest.getPageData('http://m.newsmth.net/article/FamilyLife/1755452124', cookies, function (page_data) {
+        oFile.writeFile('./test.html', page_data);
+    });
 });
 

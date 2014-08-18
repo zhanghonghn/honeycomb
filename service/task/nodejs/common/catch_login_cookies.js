@@ -13,7 +13,6 @@ function getPageBody(json_data) {
 }
 
 page.onResourceError = function (resourceError) {
-    console.log(JSON.parse(json_data));
     if (resourceError.url == url) {
         console.log('发生异常！');
         phantom.exit();
@@ -26,12 +25,19 @@ page.customHeaders = {
 }
 page.open(url, 'POST', getPageBody(JSON.parse(json_data)), function (status) {
     if (status == 'success') {
-//        page.evaluate(function () {
-//            console.log(JSON.stringify(page.cookies));
-//        });
-        console.log(JSON.stringify(page.cookies));
+        //        page.evaluate(function () {
+        //            console.log(JSON.stringify(page.cookies));
+        //        });
+        //console.log(JSON.stringify(page.cookies));
+        page.open('http://m.newsmth.net/', 'get', function (status) {
+            if (status == 'success') {
+                console.log(JSON.stringify(page.cookies));
+            } else {
+                console.log(url + ':加载失败！');
+            }
+            phantom.exit();
+        })
     } else {
         console.log(url + ':登录加载失败！');
     }
-    phantom.exit();
 });
