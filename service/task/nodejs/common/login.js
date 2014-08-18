@@ -4,21 +4,7 @@ var http = require('http');
 var cheerio = require("cheerio");
 var querystring = require('querystring');
 var oFile = require('fs');
-
-function parseURI(url) {
-    var m = String(url).replace(/^\s+|\s+$/g, '').match(/^([^:\/?#]+:)?(\/\/(?:[^:@]*(?::[^:@]*)?@)?(([^:\/?#]*)(?::(\d*))?))?([^?#]*)(\?[^#]*)?(#[\s\S]*)?/);
-    return (m ? {
-        href: m[0] || '',
-        protocol: m[1] || '',
-        authority: m[2] || '',
-        host: m[3] || '',
-        hostname: m[4] || '',
-        port: m[5] || '80',
-        pathname: m[6] || '',
-        search: m[7] || '',
-        hash: m[8] || ''
-    } : null);
-}
+var oProcess = require('child_process');
 
 function Request() {
     this.sCookies = null;
@@ -95,25 +81,44 @@ Request.prototype = {
         req.write(post_data + "\n");
         req.end();
     },
-    getCookies: function (url, data, callback) {
+    encodeCookies: function (cookies) {
+        var data = JSON.parse(cookies || "[]");
+        var iLen = data.length;
+        var result_cookies = '';
+        while (iLen--) {
+            result_cookies += data[iLen]['name'] + "=" + data[iLen]['value'] + (iLen > 0 ? "; " : '');
+        }
+        return result_cookies;
+    },
+    getCookies: function (url, data, callback, no_login) {
         var _this = this;
-        this.postPageData(url, data, function (res_data, res) {
-            callback && callback(res.headers['set-cookie'].join(''));
-        });
+        if (!no_login) {
+            oProcess.exec('phantomjs catch_login_cookies.js "' + url + '" "' + JSON.stringify(data).replace(/\"/g, '\\"') + '"', function (error, cookies, stderr) {
+                if (error !== null) {
+                    console.log('exec error: ' + error);
+                } else {
+                    callback && callback(_this.encodeCookies(cookies));
+                }
+            });
+        } else {
+            oProcess.exec('phantomjs catch_home_cookies.js "' + url + '" "' + data + '"', function (error, cookies, stderr) {
+                if (error !== null) {
+                    console.log('exec error: ' + error);
+                } else {
+                    console.log('%$#%#$%$#' + _this.encodeCookies(cookies));
+                    callback && callback(_this.encodeCookies(cookies));
+                }
+            });
+        }
     }
 }
 
 var oTest = new Request();
-
-//oTest.getCookies('http://www.newsmth.net/nForum/login', { "id": 'wjzh', "passwd": 'bull51526', "s-mode": '0', "CookieDate": '3' }, function (cookies) {
-//    console.log(cookies);
-//});
-
-oTest.getCookies('http://s.club.sohu.com/login-form', { "email": '363077621@qq.com', "password": 'bull51526', "persistentcookie": '1' }, function (cookies) {
-    oTest.getPageData('http://i.club.sohu.com/summary', cookies, function (data) {
-        console.log(cookies);
-        oFile.writeFile('./test.html', data);
-        console.log('done');
-    });
+oTest.getCookies('http://www.newsmth.net/nForum/user/ajax_login.json', { "id": 'wjzh', "passwd": 'bull51526', "CookieDate": '3', 'mode': '2' }, function (cookies) {
+    oTest.getCookies('http://m.newsmth.net/', cookies, function (cookies) {//.replace(/\s+/g, "")
+        oTest.getPageData('http://m.newsmth.net/article/DecorationTrade', cookies, function (page_data) {
+            oFile.writeFile('./test.html', page_data);
+        });
+    }, true);
 });
 
