@@ -5,6 +5,7 @@ var cheerio = require("cheerio");
 var querystring = require('querystring');
 var oFile = require('fs');
 var oProcess = require('child_process');
+var PhantomClass = require('phantom');
 
 function Request() {
     this.sCookies = null;
@@ -90,33 +91,27 @@ Request.prototype = {
         }
         return result_cookies;
     },
-    getCookies: function (url, data, callback, no_login) {
+    getCookies: function (url, data, callback) {
         var _this = this;
-        if (!no_login) {
-            oProcess.exec('phantomjs catch_login_cookies.js "' + url + '" "' + JSON.stringify(data).replace(/\"/g, '\\"') + '"', function (error, cookies, stderr) {
-                if (error !== null) {
-                    console.log('exec error: ' + error);
-                } else {
-                    callback && callback(_this.encodeCookies(cookies));
-                }
+        PhantomClass.create(function (phantom) {
+            phantom.createPage(function (page) {
+                page.open(url, function (status) {
+                    if (status == "success") {
+                        page.evaluate(function () { return document.cookie; }, function (cookie) {
+                            console.log(cookie);
+                            phantom.exit();
+                        });
+                    } else {
+
+                    }
+                });
             });
-        } else {
-            oProcess.exec('phantomjs catch_home_cookies.js "' + url + '" "' + data + '"', function (error, cookies, stderr) {
-                if (error !== null) {
-                    console.log('exec error: ' + error);
-                } else {
-                    callback && callback(_this.encodeCookies(cookies));
-                }
-            });
-        }
+        });
     }
 }
 
 var oTest = new Request();
 oTest.getCookies('http://www.newsmth.net/nForum/user/ajax_login.json', { "id": 'wjzh', "passwd": 'bull51526', "CookieDate": '3', 'mode': '2' }, function (cookies) {
-   
-    oTest.getPageData('http://m.newsmth.net/article/FamilyLife/1755452124', cookies, function (page_data) {
-        oFile.writeFile('./test.html', page_data);
-    });
+
 });
 

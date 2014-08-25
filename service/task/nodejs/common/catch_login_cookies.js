@@ -25,18 +25,20 @@ page.customHeaders = {
 }
 page.open(url, 'POST', getPageBody(JSON.parse(json_data)), function (status) {
     if (status == 'success') {
-        //        page.evaluate(function () {
-        //            console.log(JSON.stringify(page.cookies));
+        page.evaluate(function () {
+            console.log('***************');
+            console.log(JSON.stringify(document.cookie));
+        });
+        //phantom.exit();
+        /*console.log(JSON.stringify(page.cookies));*/
+        //        page.open('http://m.newsmth.net/', 'get', function (status) {
+        //            if (status == 'success') {
+        //                console.log(JSON.stringify(page.cookies));
+        //            } else {
+        //                console.log(url + ':加载失败！');
+        //            }
+        //            phantom.exit();
         //        });
-        //console.log(JSON.stringify(page.cookies));
-        page.open('http://m.newsmth.net/', 'get', function (status) {
-            if (status == 'success') {
-                console.log(JSON.stringify(page.cookies));
-            } else {
-                console.log(url + ':加载失败！');
-            }
-            phantom.exit();
-        })
     } else {
         console.log(url + ':登录加载失败！');
     }
