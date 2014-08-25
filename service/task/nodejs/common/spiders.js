@@ -153,10 +153,11 @@ Spiders.prototype = {
 }
 module.exports = Spiders;
 
+/*
 var oTest = new Spiders();
 oTest.getCookie('http://www.newsmth.net/nForum/user/ajax_login.json', 'post', { "id": 'wjzh', "passwd": 'bull51526', "CookieDate": '3', 'mode': '0' }, function (cookie, page) {
     oTest.ajaxGetPage(page, 'http://www.newsmth.net/nForum/board/DecorationTrade?ajax', function (page) {
         oFile.writeFile('./test.html', page.getContent());
     }, true);
-}, true);
+}, true);*/
 
