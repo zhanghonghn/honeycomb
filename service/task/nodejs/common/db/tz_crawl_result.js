@@ -1,9 +1,9 @@
 ﻿var oMysqlBaseModel = require('./db_base.js');
 
-var oTZCrawlModal = oMysqlBaseModel.extend({
+var oTZCrawlResultModal = oMysqlBaseModel.extend({
     tableName: "tz_crawl_result"
 });
-module.exports = oTZCrawlModal;
+module.exports = oTZCrawlResultModal;
 
 /*
 var oMysqlTest = new oTZCrawlModal({
