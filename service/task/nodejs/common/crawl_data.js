@@ -42,7 +42,7 @@ var oCrawlManager = {
         }
         return oHeaderData;
     },
-    getPageData: function (url, callback) {
+    getDirectPageData: function (url, callback) {
         http.get(url, function (res) {
             var data = "";
             res.on('data', function (chunk) {
@@ -121,7 +121,7 @@ var oCrawlManager = {
     getLoginCookie: function (url, data, callback) {
         var req = oCrawlManager.getPageData(url, null, data, 'post');
         req.on('response', function (res) {
-            callback && callback(res.headers['cookie']);
+            callback && callback(res.header['cookie']);
             req = null;
         });
     },
@@ -163,6 +163,10 @@ var oCrawlManager = {
 
 module.exports = oCrawlManager;
 
-oCrawlManager.getAjaxLoginCookie('http://www.newsmth.net/nForum/user/ajax_login.json', { "id": 'wjzh', "passwd": 'bull51526', "CookieDate": '3', 'mode': '0' }, function (cookie, page) {
-    console.log(cookie);
-}, true);
+//oCrawlManager.getAjaxLoginCookie('http://www.newsmth.net/nForum/user/ajax_login.json', { "id": 'wjzh', "passwd": 'bull51526', "CookieDate": '3', 'mode': '0' }, function (cookie, page) {
+//    console.log(cookie);
+//}, true);
+
+//oCrawlManager.getDirectPageData('http://www.baidu.com', function (data) {
+//    console.log(data);
+//})
