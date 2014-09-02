@@ -163,10 +163,17 @@ var oCrawlManager = {
 
 module.exports = oCrawlManager;
 
+/*************测试****************/
 //oCrawlManager.getAjaxLoginCookie('http://www.newsmth.net/nForum/user/ajax_login.json', { "id": 'wjzh', "passwd": 'bull51526', "CookieDate": '3', 'mode': '0' }, function (cookie, page) {
 //    console.log(cookie);
 //}, true);
 
 //oCrawlManager.getDirectPageData('http://www.baidu.com', function (data) {
+//    console.log(data);
+//})
+
+//var sCookies = 'main[UTMPUSERID]=wjzh; main[UTMPKEY]=80528423; main[UTMPNUM]=39408; main[PASSWORD]=a%2525%253E%257CSbr%2527RZMJ%2502%2560%253DN%255BE%2507O%250BQ%255B%255B';
+
+//oCrawlManager.getAjaxPageData('http://www.newsmth.net/nForum/board/DecorationTrade?ajax', sCookies, null, 'post', function (data) {
 //    console.log(data);
 //})

@@ -1,5 +1,5 @@
 ﻿/*
-* 水木页面抓取 
+* 搜狐聚焦页面抓取 
 */
 var TZCrawlModalClass = require('../common/db/tz_crawl.js');
 var oCrawlTool = require('../common/crawl_data.js');
