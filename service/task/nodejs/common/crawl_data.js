@@ -2,7 +2,7 @@
 
 var http = require('http');
 var oURL = require('url');
-var Iconv = require('iconv').Iconv;
+var Iconv = require('iconv-lite');
 var querystring = require('querystring');
 var PhantomClass = require('phantom');
 
@@ -49,7 +49,7 @@ var oCrawlManager = {
             chunks[i].copy(buffer, pos);
             pos += chunks[i].length;
         }
-        return new Iconv(old_encode || 'GBK', (to_encode || 'UTF-8') + '//TRANSLIT//IGNORE').convert(buffer).toString()
+        return Iconv.encode()
     },
     _addResposeEvent: function (res, callback) {
         var chunks = [], size = 0;
@@ -155,7 +155,7 @@ var oCrawlManager = {
                 page.open(url, method || 'get', data || null, function (status) {
                     if (status == "success") {
                         page.evaluate(function () { return document.cookie; }, function (cookie) {
-                            callback && callback(cookie, page);
+                            callback && callback(cookie, page, phantom);
                         });
                     } else {
                         console.log('获取【' + url + '】失败！');
@@ -184,7 +184,7 @@ var oCrawlManager = {
                 page.open(url, method || 'get', data || null, function (status) {
                     if (status == "success") {
                         page.evaluate(function () { return document.documentElement.outerHTML; }, function (html) {
-                            callback && callback(html, page);
+                            callback && callback(html, page, phantom);
                         });
                     } else {
                         console.log('获取【' + url + '】失败！');

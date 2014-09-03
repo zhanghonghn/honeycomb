@@ -9,6 +9,7 @@ var oLoginConfig = oCofing.login;
 var sLoginCookies = '';
 var fs = require('fs');
 
-oCrawlTool.getDirectPageDataFromPhantom(oCofing.home.url, function (html) {
+oCrawlTool.getDirectPageDataFromPhantom(oCofing.home.url, function (html, page, phantom) {
+    console.log(phantom.outputEncoding);
     fs.writeFile('./test.html', html, 'utf-8');
 });
