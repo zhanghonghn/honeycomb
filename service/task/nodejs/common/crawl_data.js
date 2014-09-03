@@ -2,6 +2,7 @@
 
 var http = require('http');
 var oURL = require('url');
+var Iconv = require('iconv').Iconv;
 var querystring = require('querystring');
 var PhantomClass = require('phantom');
 
@@ -25,7 +26,7 @@ var oCrawlManager = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/32.0.1700.76 Safari/537.36',
             'Connection': 'keep-alive',
             'Accept-Encoding': 'gzip,deflate,sdch',
-            'Accept-Language': 'zh-CN,zh;q=0.8,en;q=0.6,nl;q=0.4,zh-TW;q=0.2',
+            //'Accept-Language': 'zh-CN,zh;q=0.8,en;q=0.6,nl;q=0.4,zh-TW;q=0.2',
             'Cache-Control': 'no-cache',
             'Host': oURLData.hostname,
             'Accept': '*/*'
@@ -42,15 +43,34 @@ var oCrawlManager = {
         }
         return oHeaderData;
     },
+    _convertEncode: function (chunks, size, old_encode, to_encode) {
+        var buffer = new Buffer(size), pos = 0;
+        for (var i = 0, l = chunks.length; i < l; i++) {
+            chunks[i].copy(buffer, pos);
+            pos += chunks[i].length;
+        }
+        return new Iconv(old_encode || 'GBK', (to_encode || 'UTF-8') + '//TRANSLIT//IGNORE').convert(buffer).toString()
+    },
+    _addResposeEvent: function (res, callback) {
+        var chunks = [], size = 0;
+        res.on('data', function (chunk) {
+            chunks.push(chunk);
+            size += chunk.length;
+        });
+        res.on("end", function () {
+            var sCurrentEncode = (function () {
+                var arrMatch = /charset=(.+)/.exec(res['headers']['content-type']); //[1] || 'GBK'
+                if (arrMatch) {
+                    return arrMatch[1] ? arrMatch[1].toUpperCase() : 'GBK';
+                }
+                return 'GBK';
+            })();
+            callback && callback(oCrawlManager._convertEncode(chunks, size, sCurrentEncode, 'UTF-8'));
+        });
+    },
     getDirectPageData: function (url, callback) {
         http.get(url, function (res) {
-            var data = "";
-            res.on('data', function (chunk) {
-                data += chunk;
-            });
-            res.on("end", function () {
-                callback(data);
-            });
+            oCrawlManager._addResposeEvent(res, callback);
         }).on("error", function (err) {
             callback(null, err);
         });
@@ -70,18 +90,12 @@ var oCrawlManager = {
         var options = {
             hostname: oURLData.hostname,
             port: oURLData.port,
-            path: oURLData.path,
+            path: oURLData.pathname,
             method: method || 'get',
             headers: oHeader
         };
         var req = http.request(options, function (res) {
-            var data = "";
-            res.on('data', function (chunk) {
-                data += chunk;
-            });
-            res.on("end", function () {
-                callback && callback(data);
-            });
+            oCrawlManager._addResposeEvent(res, callback);
         }).on("error", function () {
             callback && callback(null);
         });
@@ -104,13 +118,7 @@ var oCrawlManager = {
             headers: oHeader
         };
         var req = http.request(options, function (res) {
-            var data = "";
-            res.on('data', function (chunk) {
-                data += chunk;
-            });
-            res.on("end", function () {
-                callback && callback(data);
-            });
+            oCrawlManager._addResposeEvent(res, callback);
         }).on("error", function () {
             callback(null);
         });
@@ -158,6 +166,35 @@ var oCrawlManager = {
     },
     getAjaxPageCookie: function (url, method, data, callback) {
         oCrawlManager.getPageCookie(url, method, data, callback, true);
+    },
+    getPageFromPhantom: function (url, method, data, coockies, callback, b_ajax) {
+        PhantomClass.create(function (phantom) {
+            phantom.createPage(function (page) {
+                if (data && typeof data == 'object') {
+                    data = querystring.stringify(data);
+                }
+                if (b_ajax) {
+                    page.setHeaders({ "X-Requested-With": "XMLHttpRequest" });
+                }
+                if (coockies) {
+                    page.setHeaders({ "Cookie": coockies });
+                }
+                page.set('settings.loadImages', false);
+                page.set('settings.diskCache', false);
+                page.open(url, method || 'get', data || null, function (status) {
+                    if (status == "success") {
+                        page.evaluate(function () { return document.documentElement.outerHTML; }, function (html) {
+                            callback && callback(html, page);
+                        });
+                    } else {
+                        console.log('获取【' + url + '】失败！');
+                    }
+                });
+            });
+        });
+    },
+    getDirectPageDataFromPhantom: function (url, callback) {
+        oCrawlManager.getPageFromPhantom(url, 'get', null, null, callback);
     }
 }
 
@@ -174,6 +211,9 @@ module.exports = oCrawlManager;
 
 //var sCookies = 'main[UTMPUSERID]=wjzh; main[UTMPKEY]=80528423; main[UTMPNUM]=39408; main[PASSWORD]=a%2525%253E%257CSbr%2527RZMJ%2502%2560%253DN%255BE%2507O%250BQ%255B%255B';
 
-//oCrawlManager.getAjaxPageData('http://www.newsmth.net/nForum/board/DecorationTrade?ajax', sCookies, null, 'post', function (data) {
+//oCrawlManager.getDirectPageData('http://www.baidu.com', function (data) {
 //    console.log(data);
-//})
+//});
+//oCrawlManager.getPageFromPhantom('http://www.so.com/s?ie=utf-8&src=hao_search&shb=1&q=so', 'get', null, null, function (html) {
+//    console.log(html);
+//});
