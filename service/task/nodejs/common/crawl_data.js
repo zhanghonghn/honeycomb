@@ -1,8 +1,8 @@
-﻿//TODO使用Phantom进行登陆
-
+﻿
 var http = require('http');
 var oURL = require('url');
 var Iconv = require('iconv-lite');
+var Needle = require('needle')
 var querystring = require('querystring');
 var PhantomClass = require('phantom');
 
@@ -40,8 +40,9 @@ var oCrawlManager = {
             } else {
                 oHeaderData['Content-Length'] = data.length;
             }
+            return oHeaderData;
         }
-        return oHeaderData;
+
     },
     _convertEncode: function (chunks, size, old_encode, to_encode) {
         var buffer = new Buffer(size), pos = 0;
@@ -49,10 +50,10 @@ var oCrawlManager = {
             chunks[i].copy(buffer, pos);
             pos += chunks[i].length;
         }
-        return Iconv.encode()
+        return Iconv.encode(buffer.toString(), old_encode);
     },
     _addResposeEvent: function (res, callback) {
-        var chunks = [], size = 0;
+        var chunks = [], size = 0, data = '';
         res.on('data', function (chunk) {
             chunks.push(chunk);
             size += chunk.length;
@@ -167,34 +168,40 @@ var oCrawlManager = {
     getAjaxPageCookie: function (url, method, data, callback) {
         oCrawlManager.getPageCookie(url, method, data, callback, true);
     },
+    getPageDataWithPage: function (page, phantom, url, method, data, coockies, callback, b_ajax) {
+        if (data && typeof data == 'object') {
+            data = querystring.stringify(data);
+        }
+        if (b_ajax) {
+            page.setHeaders({ "X-Requested-With": "XMLHttpRequest" });
+        }
+        if (coockies) {
+            page.setHeaders({ "Cookie": coockies });
+        }
+        page.set('settings.loadImages', false);
+        page.set('settings.diskCache', false);
+        page.open(url, method || 'get', data || null, function (status) {
+            if (status == "success") {
+                page.evaluate(function () { return document.documentElement.outerHTML; }, function (html) {
+                    callback && callback(html, page, phantom);
+                });
+            } else {
+                console.log('获取【' + url + '】失败！');
+            }
+        });
+    },
     getPageFromPhantom: function (url, method, data, coockies, callback, b_ajax) {
         PhantomClass.create(function (phantom) {
             phantom.createPage(function (page) {
-                if (data && typeof data == 'object') {
-                    data = querystring.stringify(data);
-                }
-                if (b_ajax) {
-                    page.setHeaders({ "X-Requested-With": "XMLHttpRequest" });
-                }
-                if (coockies) {
-                    page.setHeaders({ "Cookie": coockies });
-                }
-                page.set('settings.loadImages', false);
-                page.set('settings.diskCache', false);
-                page.open(url, method || 'get', data || null, function (status) {
-                    if (status == "success") {
-                        page.evaluate(function () { return document.documentElement.outerHTML; }, function (html) {
-                            callback && callback(html, page, phantom);
-                        });
-                    } else {
-                        console.log('获取【' + url + '】失败！');
-                    }
-                });
+                oCrawlManager.getPageDataWithPage(page, phantom, url, method, data, coockies, callback, b_ajax);
             });
         });
     },
     getDirectPageDataFromPhantom: function (url, callback) {
         oCrawlManager.getPageFromPhantom(url, 'get', null, null, callback);
+    },
+    getDirectPageDataFromPhantomWithPage: function (page, phantom, url, callback) {
+        oCrawlManager.getPageDataWithPage(page, phantom, url, 'get', null, null, callback);
     }
 }
 
@@ -211,7 +218,7 @@ module.exports = oCrawlManager;
 
 //var sCookies = 'main[UTMPUSERID]=wjzh; main[UTMPKEY]=80528423; main[UTMPNUM]=39408; main[PASSWORD]=a%2525%253E%257CSbr%2527RZMJ%2502%2560%253DN%255BE%2507O%250BQ%255B%255B';
 
-//oCrawlManager.getDirectPageData('http://www.baidu.com', function (data) {
+//oCrawlManager.getDirectPageData('http://nodejs.lofter.com/post/3c14e_48aee', function (data) {
 //    console.log(data);
 //});
 //oCrawlManager.getPageFromPhantom('http://www.so.com/s?ie=utf-8&src=hao_search&shb=1&q=so', 'get', null, null, function (html) {
