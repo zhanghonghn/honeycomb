@@ -21,3 +21,11 @@ module.exports = oTZCrawlTaskModal;
 //        console.log(result);
 //    }
 //});
+
+//new oTZCrawlTaskModal().find('all', { where: "crawl_status=1 and board_id =2", fields: 'page_url' }, function (err, result) {
+//    if (err) {
+//        console.log(err);
+//    } else {
+//        console.log(result);
+//    }
+//});
